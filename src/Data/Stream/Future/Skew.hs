@@ -62,8 +62,8 @@ import Prelude hiding (null, tail, drop, dropWhile, length, foldr, last, span, r
 #if !(MIN_VERSION_base(4,11,0))
 import Data.Semigroup hiding (Last)
 #endif
-import Data.Semigroup.Foldable
-import Data.Semigroup.Traversable
+import Data.Semigroup.Semifoldable
+import Data.Semigroup.Semitraversable
 #if MIN_VERSION_base(4,7,0)
 import qualified GHC.Exts as Exts
 #endif
@@ -99,17 +99,17 @@ instance Foldable Complete where
   null _ = False
 #endif
 
-instance Foldable1 Complete where
-  foldMap1 f (Tip a) = f a
-  foldMap1 f (Bin _ a l r) = f a <> foldMap1 f l <> foldMap1 f r
+instance Semifoldable Complete where
+  semifoldMap f (Tip a) = f a
+  semifoldMap f (Bin _ a l r) = f a <> semifoldMap f l <> semifoldMap f r
 
 instance Traversable Complete where
   traverse f (Tip a) = Tip <$> f a
   traverse f (Bin n a l r) = Bin n <$> f a <*> traverse f l <*> traverse f r
 
-instance Traversable1 Complete where
-  traverse1 f (Tip a) = Tip <$> f a
-  traverse1 f (Bin n a l r) = Bin n <$> f a <.> traverse1 f l <.> traverse1 f r
+instance Semitraversable Complete where
+  semitraverse f (Tip a) = Tip <$> f a
+  semitraverse f (Bin n a l r) = Bin n <$> f a <.> semitraverse f l <.> semitraverse f r
 
 bin :: a -> Complete a -> Complete a -> Complete a
 bin a l r = Bin (1 + weight l + weight r) a l r
@@ -149,7 +149,7 @@ extendTree :: (Future a -> b) -> Complete a -> (Complete a -> Future a) -> Compl
 extendTree g w@Tip{}         f = Tip (g (f w))
 extendTree g w@(Bin n _ l r) f = Bin n (g (f w)) (extendTree g l (:< f r))  (extendTree g r f)
 
-instance Apply Future where
+instance Semiapplicative Future where
   Last (Tip f)         <.> as                   = singleton (f (extract as))
   fs                   <.> Last (Tip a)         = singleton (extract fs a)
   Last (Bin _ f lf rf) <.> Last (Bin _ a la ra) = f a <| (lf :< Last rf  <.> la :< Last ra )
@@ -185,17 +185,17 @@ instance Foldable Future where
   null _ = False
 #endif
 
-instance Foldable1 Future where
-  foldMap1 f (t :< ts) = foldMap1 f t <> foldMap1 f ts
-  foldMap1 f (Last t) = foldMap1 f t
+instance Semifoldable Future where
+  semifoldMap f (t :< ts) = semifoldMap f t <> semifoldMap f ts
+  semifoldMap f (Last t) = semifoldMap f t
 
 instance Traversable Future where
   traverse f (t :< ts) = (:<) <$> traverse f t <*> traverse f ts
   traverse f (Last t) = Last <$> traverse f t
 
-instance Traversable1 Future where
-  traverse1 f (t :< ts) = (:<) <$> traverse1 f t <.> traverse1 f ts
-  traverse1 f (Last t) = Last <$> traverse1 f t
+instance Semitraversable Future where
+  semitraverse f (t :< ts) = (:<) <$> semitraverse f t <.> semitraverse f ts
+  semitraverse f (Last t) = Last <$> semitraverse f t
 
 -- | /O(log n)/
 replicate :: Int -> a -> Future a

@@ -82,7 +82,7 @@ import Control.Applicative
 import Control.Comonad
 import Data.Char (isSpace)
 import Data.Data
-import Data.Functor.Apply
+import Data.Functor.Semiapplicative
 import Data.Functor.Extend
 import Data.Functor.Rep
 #if !(MIN_VERSION_base(4,8,0))
@@ -91,8 +91,8 @@ import Data.Traversable
 #endif
 import Data.Foldable hiding (concat)
 import Data.Distributive
-import Data.Semigroup.Traversable
-import Data.Semigroup.Foldable
+import Data.Semigroup.Semitraversable
+import Data.Semigroup.Semifoldable
 import Data.List.NonEmpty (NonEmpty(..))
 
 data Stream a = a :> Stream a deriving
@@ -134,7 +134,7 @@ instance Comonad Stream where
   extend f w = f w :> extend f (tail w)
   extract (a :> _) = a
 
-instance Apply Stream where
+instance Semiapplicative Stream where
   (f :> fs) <.> (a :> as) = f a :> (fs <.> as)
   as        <.  _         = as
   _          .> bs        = bs
@@ -162,11 +162,11 @@ instance Foldable Stream where
 instance Traversable Stream where
   traverse f ~(a :> as) = (:>) <$> f a <*> traverse f as
 
-instance Foldable1 Stream
+instance Semifoldable Stream
 
-instance Traversable1 Stream where
-  traverse1 f ~(a :> as) = (:>) <$> f a <.> traverse1 f as
-  sequence1 ~(a :> as) = (:>) <$> a <.> sequence1 as
+instance Semitraversable Stream where
+  semitraverse f ~(a :> as) = (:>) <$> f a <.> semitraverse f as
+  semisequence ~(a :> as) = (:>) <$> a <.> semisequence as
 
 -- | The unfold function is similar to the unfold for lists. Note
 -- there is no base case: all streams must be infinite.

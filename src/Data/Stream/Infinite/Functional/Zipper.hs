@@ -58,7 +58,7 @@ import Control.Comonad
 import Data.Data
 #endif
 import Data.Functor.Extend
-import Data.Functor.Apply
+import Data.Functor.Semiapplicative
 #if !(MIN_VERSION_base(4,11,0))
 import Data.Semigroup
 #endif
@@ -110,7 +110,7 @@ instance Comonad Zipper where
   duplicate (n :~ f) = n :~ (:~ f)
   extract (n :~ f) = f n
 
-instance Apply Zipper where
+instance Semiapplicative Zipper where
   (nf :~ f) <.> (na :~ a)
     | dn <- na - nf
     = nf :~ \n -> f n (a (n + dn))

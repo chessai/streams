@@ -46,7 +46,7 @@ module Data.Stream.Supply
 import Control.Applicative
 #endif
 import Control.Comonad
-import Data.Functor.Apply
+import Data.Functor.Semiapplicative
 import Data.Functor.Extend
 import Data.Functor.Rep
 import Data.IORef(newIORef, atomicModifyIORef)
@@ -57,8 +57,8 @@ import Data.Traversable
 #if !(MIN_VERSION_base(4,11,0))
 import Data.Semigroup
 #endif
-import Data.Semigroup.Foldable
-import Data.Semigroup.Traversable
+import Data.Semigroup.Semifoldable
+import Data.Semigroup.Semitraversable
 import System.IO.Unsafe (unsafeInterleaveIO)
 import Data.Stream.Infinite
 import qualified Data.Stream.Infinite.Skew as Skew
@@ -94,7 +94,7 @@ instance Comonad Supply where
   duplicate s@(Supply _ l r) = Supply s (duplicate l) (duplicate r)
   extract (Supply a _ _) = a
 
-instance Apply Supply where
+instance Semiapplicative Supply where
   Supply f fl fr <.> Supply a al ar = Supply (f a) (fl <.> al) (fr <.> ar)
   a <. _ = a
   _ .> a = a
@@ -108,14 +108,14 @@ instance Applicative Supply where
 instance Foldable Supply where
   foldMap f (Supply a l r) = f a `mappend` foldMap f l `mappend` foldMap f r
 
-instance Foldable1 Supply where
-  foldMap1 f (Supply a l r) = f a <> foldMap1 f l <> foldMap1 f r
+instance Semifoldable Supply where
+  semifoldMap f (Supply a l r) = f a <> semifoldMap f l <> semifoldMap f r
 
 instance Traversable Supply where
   traverse f (Supply a l r) = Supply <$> f a <*> traverse f l <*> traverse f r
 
-instance Traversable1 Supply where
-  traverse1 f (Supply a l r) = Supply <$> f a <.> traverse1 f l <.> traverse1 f r
+instance Semitraversable Supply where
+  semitraverse f (Supply a l r) = Supply <$> f a <.> semitraverse f l <.> semitraverse f r
 
 leftSupply :: Supply a -> Supply a
 leftSupply (Supply _ l _) = l

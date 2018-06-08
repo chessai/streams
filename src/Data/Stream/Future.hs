@@ -38,8 +38,8 @@ import Data.Traversable
 #if !(MIN_VERSION_base(4,11,0))
 import Data.Semigroup hiding (Last)
 #endif
-import Data.Semigroup.Foldable
-import Data.Semigroup.Traversable
+import Data.Semigroup.Semifoldable
+import Data.Semigroup.Semitraversable
 
 #ifdef LANGUAGE_DeriveDataTypeable
 import Data.Data
@@ -101,11 +101,11 @@ instance Traversable Future where
   traverse f (Last a)  = Last <$> f a
   traverse f (a :< as) = (:<) <$> f a <*> traverse f as
 
-instance Foldable1 Future
+instance Semifoldable Future
 
-instance Traversable1 Future where
-  traverse1 f (Last a)  = Last <$> f a
-  traverse1 f (a :< as) = (:<) <$> f a <.> traverse1 f as
+instance Semitraversable Future where
+  semitraverse f (Last a)  = Last <$> f a
+  semitraverse f (a :< as) = (:<) <$> f a <.> semitraverse f as
 
 instance Extend Future where
   extended = extend
@@ -120,7 +120,7 @@ instance Comonad Future where
   extend f w@(_ :< as) = f w :< extend f as
   extend f w@(Last _)  = Last (f w)
 
-instance Apply Future where
+instance Semiapplicative Future where
   Last f    <.> Last a    = Last (f a)
   (f :< _)  <.> Last a    = Last (f a)
   Last f    <.> (a :< _ ) = Last (f a)

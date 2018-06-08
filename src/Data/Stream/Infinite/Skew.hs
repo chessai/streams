@@ -52,8 +52,8 @@ import Data.Functor.Rep
 import Data.Foldable
 import Data.Traversable
 import Data.Semigroup hiding (Last)
-import Data.Semigroup.Foldable
-import Data.Semigroup.Traversable
+import Data.Semigroup.Semifoldable
+import Data.Semigroup.Semitraversable
 import Prelude hiding (null, head, tail, drop, dropWhile, length, foldr, last, span, repeat, replicate, (!!), break)
 
 infixr 5 :<, <|
@@ -88,17 +88,17 @@ instance Foldable Complete where
   null _ = False
 #endif
 
-instance Foldable1 Complete where
-  foldMap1 f (Tip a) = f a
-  foldMap1 f (Bin _ a l r) = f a <> foldMap1 f l <> foldMap1 f r
+instance Semifoldable Complete where
+  semifoldMap f (Tip a) = f a
+  semifoldMap f (Bin _ a l r) = f a <> semifoldMap f l <> semifoldMap f r
 
 instance Traversable Complete where
   traverse f (Tip a) = Tip <$> f a
   traverse f (Bin n a l r) = Bin n <$> f a <*> traverse f l <*> traverse f r
 
-instance Traversable1 Complete where
-  traverse1 f (Tip a) = Tip <$> f a
-  traverse1 f (Bin n a l r) = Bin n <$> f a <.> traverse1 f l <.> traverse1 f r
+instance Semitraversable Complete where
+  semitraverse f (Tip a) = Tip <$> f a
+  semitraverse f (Bin n a l r) = Bin n <$> f a <.> semitraverse f l <.> semitraverse f r
 
 bin :: a -> Complete a -> Complete a -> Complete a
 bin a l r = Bin (1 + weight l + weight r) a l r
@@ -132,7 +132,7 @@ instance Comonad Stream where
       go g w@(Bin n _ l r) f = Bin n (g (f w)) (go g l (:< f r))  (go g r f)
   extract (a :< _) = extract a
 
-instance Apply Stream where
+instance Semiapplicative Stream where
   fs <.> as = mapWithIndex (\n f -> f (as !! n)) fs
   as <.  _  = as
   _   .> bs = bs
@@ -161,14 +161,14 @@ instance Foldable Stream where
   null _ = False
 #endif
 
-instance Foldable1 Stream where
-  foldMap1 f (t :< ts) = foldMap1 f t <> foldMap1 f ts
+instance Semifoldable Stream where
+  semifoldMap f (t :< ts) = semifoldMap f t <> semifoldMap f ts
 
 instance Traversable Stream where
   traverse f (t :< ts) = (:<) <$> traverse f t <*> traverse f ts
 
-instance Traversable1 Stream where
-  traverse1 f (t :< ts) = (:<) <$> traverse1 f t <.> traverse1 f ts
+instance Semitraversable Stream where
+  semitraverse f (t :< ts) = (:<) <$> semitraverse f t <.> semitraverse f ts
 
 instance Distributive Stream where
   distribute w = tabulate (\i -> fmap (!! i) w)
